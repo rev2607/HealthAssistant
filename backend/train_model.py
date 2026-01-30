@@ -145,20 +145,37 @@ def train_model():
     # Calculate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"\n           Test Accuracy: {accuracy:.2%}")
+
+    # Calculate weighted metrics
+    from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
+    precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
     
-    # Detailed classification report (first 10 classes for brevity)
     print("\n" + "=" * 60)
-    print("Classification Report (Sample):")
+    print("Model Performance Evaluation (Statistical Results)")
     print("=" * 60)
-    report = classification_report(y_test, y_pred, output_dict=True)
+    print("Performance Metrics")
+    print(f"• Accuracy:  {accuracy:.2%}")
+    print(f"• Precision: {precision:.2%}")
+    print(f"• Recall:    {recall:.2%}")
+    print(f"• F1-Score:  {f1:.2%}")
+
+    # Calculate Confusion Matrix Summary (Aggregated for Multi-class)
+    cm = confusion_matrix(y_test, y_pred)
     
-    # Show metrics for first 5 diseases
-    diseases = list(df['disease'].unique())[:5]
-    print(f"\n{'Disease':<30} {'Precision':<12} {'Recall':<12} {'F1-Score':<12}")
-    print("-" * 66)
-    for disease in diseases:
-        if disease in report:
-            print(f"{disease:<30} {report[disease]['precision']:.2f}         {report[disease]['recall']:.2f}         {report[disease]['f1-score']:.2f}")
+    # For multi-class, we calculate TP/FP/FN/TN for each class and sum them
+    FP = cm.sum(axis=0) - np.diag(cm)  
+    FN = cm.sum(axis=1) - np.diag(cm)
+    TP = np.diag(cm)
+    TN = cm.sum() - (FP + FN + TP)
+
+    # Summing them up to give a single "macro" summary value often used in basic reports
+    # Note: TN is usually very high in multi-class because it's the sum of "not class X" for all classes
+    print("\nConfusion Matrix Summary (Aggregated)")
+    print(f"• True Positives (TP):  {int(TP.sum())}")
+    print(f"• True Negatives (TN):  {int(TN.sum())}")
+    print(f"• False Positives (FP): {int(FP.sum())}")
+    print(f"• False Negatives (FN): {int(FN.sum())}")
+    print("\n*Note: True Negatives are high because for every single correct prediction,\nit correctly predicts that it is NOT any of the other diseases.*")
     
     # ========================================
     # Save Model and Vectorizer

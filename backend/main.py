@@ -528,6 +528,10 @@ def predict_disease(
         # Confidence is the highest probability
         confidence = float(max(probabilities))
         
+        # Ensure confidence is within 0-1 range
+        if confidence > 1.0:
+            confidence = 1.0
+        
         # ========================================
         # Step 4: Calculate risk level
         # ========================================
